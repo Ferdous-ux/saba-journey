@@ -1,7 +1,6 @@
+import 'package:flame/components.dart';
 import 'package:flame/game.dart';
-
-import 'game_config.dart';
-
+import 'package:flutter/material.dart';
 
 
 class SabaGame extends FlameGame {
@@ -13,11 +12,48 @@ class SabaGame extends FlameGame {
     await super.onLoad();
 
 
-    camera.viewfinder.visibleGameSize = Vector2(
+    // خلفية اللعبة
+    add(
+      RectangleComponent(
 
-      GameConfig.gameWidth,
+        size: size,
 
-      GameConfig.gameHeight,
+        paint: Paint()
+          ..color = const Color(0xff1b1b1b),
+
+      ),
+    );
+
+
+    // نص تجريبي
+    add(
+
+      TextComponent(
+
+        text: "SABA JOURNEY",
+
+        position: Vector2(
+          size.x / 2,
+          size.y / 2,
+        ),
+
+        anchor: Anchor.center,
+
+        textRenderer: TextPaint(
+
+          style: const TextStyle(
+
+            color: Colors.orange,
+
+            fontSize: 40,
+
+            fontWeight: FontWeight.bold,
+
+          ),
+
+        ),
+
+      ),
 
     );
 
