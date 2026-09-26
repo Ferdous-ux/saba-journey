@@ -1,16 +1,19 @@
-# saba_journey
+# Saba Journey
 
-A new Flutter project.
+A 2D adventure game developed by **Fero Games** using Flutter and Flame Engine.
 
-## Getting Started
+## About
 
-This project is a starting point for a Flutter application.
+Saba Journey is the first game project by **Fero Games**.
 
-A few resources to get you started if this is your first Flutter project:
+The game is a 2D adventure experience inspired by Arabian environments, exploration, and storytelling.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Tech Stack
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Flutter
+- Dart
+- Flame Engine
+- Riverpod
+- Hive Local Storage
+
+## Project Structure
