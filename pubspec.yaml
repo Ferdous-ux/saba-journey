@@ -1,0 +1,68 @@
+name: saba_journey
+
+description: "A 2D adventure game developed by Fero Games."
+
+publish_to: 'none'
+
+
+# Application version
+version: 0.1.0+1
+
+
+environment:
+  sdk: ^3.10.4
+
+
+
+dependencies:
+
+  flutter:
+    sdk: flutter
+
+
+  # iOS style icons
+  cupertino_icons: ^1.0.8
+
+
+  # ============================
+  # Game Engine
+  # ============================
+  flame: ^1.18.0
+
+
+  # ============================
+  # State Management
+  # ============================
+  flutter_riverpod: ^2.5.1
+
+
+  # ============================
+  # Local Database / Save Game
+  # ============================
+  hive_flutter: ^1.1.0
+
+
+
+dev_dependencies:
+
+  flutter_test:
+    sdk: flutter
+
+
+  # Code quality
+  flutter_lints: ^6.0.0
+
+
+
+flutter:
+
+  uses-material-design: true
+
+
+  # Game Assets
+  assets:
+
+    - assets/images/
+    - assets/audio/
+    - assets/fonts/
+    - assets/maps/
