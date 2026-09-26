@@ -1,6 +1,9 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+
 import '../home/home_screen.dart';
+
 
 
 class SplashScreen extends StatefulWidget {
@@ -65,6 +68,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
           mainAxisAlignment: MainAxisAlignment.center,
 
+
           children: [
 
 
@@ -80,6 +84,26 @@ class _SplashScreenState extends State<SplashScreen> {
 
                 fontWeight: FontWeight.bold,
 
+                letterSpacing: 4,
+
+              ),
+
+            ),
+
+
+            const SizedBox(height: 15),
+
+
+            const Text(
+
+              "SABA JOURNEY",
+
+              style: TextStyle(
+
+                color: Colors.white70,
+
+                fontSize: 18,
+
                 letterSpacing: 3,
 
               ),
@@ -87,7 +111,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
 
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 40),
 
 
             const CircularProgressIndicator(

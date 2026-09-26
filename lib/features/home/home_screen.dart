@@ -12,9 +12,6 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
 
-      backgroundColor: Colors.black,
-
-
       body: Center(
 
         child: ElevatedButton(

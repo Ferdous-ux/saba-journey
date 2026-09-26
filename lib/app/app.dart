@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/constants/app_constants.dart';
 import '../features/splash/splash_screen.dart';
 import 'theme.dart';
 
@@ -17,12 +18,12 @@ class FeroGamesApp extends StatelessWidget {
 
       debugShowCheckedModeBanner: false,
 
-      title: 'Fero Games',
+      title: AppConstants.appName,
+
 
       theme: AppTheme.theme,
 
 
-      // البداية من شاشة الشعار
       home: const SplashScreen(),
 
     );
