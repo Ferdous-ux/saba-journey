@@ -66,3 +66,9 @@ flutter:
     - assets/audio/
     - assets/fonts/
     - assets/maps/
+    - assets/images/backgrounds/
+    - assets/images/environment/
+    - assets/images/player/
+    - assets/images/ui/
+    - assets/images/effects/
+    

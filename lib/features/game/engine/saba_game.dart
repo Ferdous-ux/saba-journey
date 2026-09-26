@@ -1,64 +1,69 @@
+import 'dart:math' as math;
+
+import 'package:flame/camera.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
-import 'package:flutter/material.dart';
 
+import '../levels/saba_world.dart';
 
-class SabaGame extends FlameGame {
+class SabaGame extends FlameGame<SabaWorld> {
+  static const double gameWidth = 1280;
+  static const double gameHeight = 720;
 
+  SabaGame()
+      : super(
+          world: SabaWorld(),
+          camera: CameraComponent(
+            viewport: MaxViewport(),
+          ),
+        );
 
   @override
   Future<void> onLoad() async {
-
     await super.onLoad();
 
+    camera.viewfinder
+      ..anchor = Anchor.center
+      ..position = Vector2(
+        gameWidth / 2,
+        gameHeight / 2,
+      );
 
-    // خلفية اللعبة
-    add(
-      RectangleComponent(
-
-        size: size,
-
-        paint: Paint()
-          ..color = const Color(0xff1b1b1b),
-
-      ),
-    );
-
-
-    // نص تجريبي
-    add(
-
-      TextComponent(
-
-        text: "SABA JOURNEY",
-
-        position: Vector2(
-          size.x / 2,
-          size.y / 2,
-        ),
-
-        anchor: Anchor.center,
-
-        textRenderer: TextPaint(
-
-          style: const TextStyle(
-
-            color: Colors.orange,
-
-            fontSize: 40,
-
-            fontWeight: FontWeight.bold,
-
-          ),
-
-        ),
-
-      ),
-
-    );
-
-
+    _updateCamera();
   }
 
+  @override
+  void onGameResize(Vector2 size) {
+    super.onGameResize(size);
+    _updateCamera();
+  }
 
+  void _updateCamera() {
+    if (size.x <= 0 || size.y <= 0) {
+      return;
+    }
+
+    final scaleX = size.x / gameWidth;
+    final scaleY = size.y / gameHeight;
+
+    // Cover: يملأ الشاشة بالكامل مع الحفاظ على النسبة.
+    camera.viewfinder.zoom = math.max(scaleX, scaleY);
+
+    camera.viewfinder.position.setValues(
+      gameWidth / 2,
+      gameHeight / 2,
+    );
+  }
+
+  void movePlayerLeft() {
+    world.player.moveLeft();
+  }
+
+  void movePlayerRight() {
+    world.player.moveRight();
+  }
+
+  void stopPlayer() {
+    world.player.stopMoving();
+  }
 }
