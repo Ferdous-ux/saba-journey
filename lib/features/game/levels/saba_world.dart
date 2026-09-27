@@ -3,1083 +3,858 @@ import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
+import '../components/checkpoint.dart';
 import '../components/coin.dart';
 import '../components/enemy.dart';
+import '../components/level_gate.dart';
+import '../components/treasure_chest.dart';
 import '../player/saba_player.dart';
-
-
+import 'level_progress.dart';
 
 class SabaWorld extends World {
-
-
   static const double worldWidth = 5000;
-
   static const double worldHeight = 720;
 
+  // ============================================================
+  // LEVEL DATA
+  // ============================================================
 
+  final int levelNumber;
 
-  double cameraX = 0;
+  final LevelProgress progress;
 
+  final Vector2 startPosition;
 
+  final void Function(Vector2 position)?
+      onCheckpointActivated;
 
-  final SabaPlayer player = SabaPlayer(
+  bool levelCompleted = false;
 
-    position: Vector2(
-      640,
-      535,
-    ),
+  late final SabaPlayer player;
 
-  );
+  // ============================================================
+  // CONSTRUCTOR
+  // ============================================================
 
+  SabaWorld({
+    required this.levelNumber,
+    LevelProgress? progress,
+    Vector2? startPosition,
+    this.onCheckpointActivated,
+  })  : progress =
+            progress ??
+                LevelProgress(
+                  levelNumber: levelNumber,
+                ),
+        startPosition =
+            startPosition ??
+                Vector2(
+                  640,
+                  535,
+                ) {
+    player = SabaPlayer(
+      position:
+          this.startPosition.clone(),
+    );
 
-
-
-
-  void updateCamera(double x){
-
-    cameraX = x;
-
+    // استعادة العملات المحفوظة
+    player.coins =
+        this.progress.coins;
   }
 
-
-
-
-
-
+  // ============================================================
+  // LOAD
+  // ============================================================
 
   @override
   Future<void> onLoad() async {
-
-
     await super.onLoad();
 
-
-
-
-
     // =========================
-    // SKY
+    // BACKGROUND
     // =========================
 
     add(
-
       SabaSky(
-
         size: Vector2(
           worldWidth,
           worldHeight,
         ),
-
-      )
-
-      ..priority = -100,
-
+      )..priority = -100,
     );
 
-
-
-
-
-
-
-    // =========================
-    // FAR MOUNTAINS
-    // =========================
-
     add(
-
       FarMountains(
-
         size: Vector2(
           worldWidth,
           worldHeight,
         ),
-
-      )
-
-      ..priority = -80,
-
+      )..priority = -80,
     );
 
-
-
-
-
-
-
-
-    // =========================
-    // NEAR MOUNTAINS
-    // =========================
-
     add(
-
       NearMountains(
-
         size: Vector2(
           worldWidth,
           worldHeight,
         ),
-
-      )
-
-      ..priority = -60,
-
+      )..priority = -60,
     );
 
-
-
-
-
-
-
     // =========================
-    // RUINS
+    // LEVEL BUILD
     // =========================
 
-
-    add(
-
-      SabaRuins(
-
-        position: Vector2(
-          900,
-          350,
-        ),
-
-      )
-
-      ..priority = -40,
-
-    );
-
-
-
-
-
-    add(
-
-      SabaRuins(
-
-        position: Vector2(
-          2400,
-          370,
-        ),
-
-        scale: Vector2.all(0.8),
-
-      )
-
-      ..priority = -40,
-
-    );
-
-
-
-
-
-
-
-    // =========================
-    // GROUND
-    // =========================
-
-
-    add(
-
-      DesertGround(
-
-        position: Vector2(
-          0,
-          590,
-        ),
-
-        size: Vector2(
-          worldWidth,
-          130,
-        ),
-
-      )
-
-      ..priority = -20,
-
-    );
-
-
-
-
-
-
-
-    // =========================
-    // COINS
-    // =========================
-
-
-    add(
-
-      Coin(
-
-        position: Vector2(
-          1200,
-          500,
-        ),
-
-      )
-
-      ..priority = 5,
-
-    );
-
-
-
-    add(
-
-      Coin(
-
-        position: Vector2(
-          1800,
-          500,
-        ),
-
-      )
-
-      ..priority = 5,
-
-    );
-
-
-
-
-
-
-
-    // =========================
-    // ENEMY
-    // =========================
-
-
-    add(
-
-      SabaEnemy(
-
-        position: Vector2(
-          2200,
-          500,
-        ),
-
-        player: player,
-
-      )
-
-      ..priority = 6,
-
-    );
-
-
-
-
-
-
+    if (levelNumber == 1) {
+      _buildLevelOne();
+    } else {
+      _buildLevelTwo();
+    }
 
     // =========================
     // PLAYER
     // =========================
 
-
-      player.priority = 10;
+    player.priority = 10;
 
     add(player);
-
   }
 
+  // ============================================================
+  // LEVEL 1
+  // ============================================================
 
+  void _buildLevelOne() {
+    // =========================
+    // RUINS
+    // =========================
 
-  @override
-  void update(double dt){
-
-    super.update(dt);
-
-
-
-    // فحص جمع العملات
-
-    for(final component in children){
-
-      if(component is Coin){
-
-        component.checkCollision(player);
-
-      }
-
-    }
-
-
-  }
-
-
-
-
-
-}
-// =================================================
-// SKY
-// =================================================
-
-class SabaSky extends PositionComponent {
-
-
-  SabaSky({
-
-    required super.size,
-
-  });
-
-
-
-
-  @override
-  void render(Canvas canvas) {
-
-
-    final rect = Rect.fromLTWH(
-
-      0,
-
-      0,
-
-      size.x,
-
-      size.y,
-
+    add(
+      SabaRuins(
+        position: Vector2(
+          900,
+          350,
+        ),
+      )..priority = -40,
     );
 
-
-
-
-    final paint = Paint()
-
-      ..shader = const LinearGradient(
-
-        begin: Alignment.topCenter,
-
-        end: Alignment.bottomCenter,
-
-        colors: [
-
-          Color(0xFF17233C),
-
-          Color(0xFF354B68),
-
-          Color(0xFFB96E50),
-
-          Color(0xFFF1B477),
-
-        ],
-
-        stops: [
-
-          0.0,
-
-          0.40,
-
-          0.75,
-
-          1.0,
-
-        ],
-
-      ).createShader(rect);
-
-
-
-
-    canvas.drawRect(
-
-      rect,
-
-      paint,
-
+    add(
+      SabaRuins(
+        position: Vector2(
+          2400,
+          370,
+        ),
+        scale: Vector2.all(
+          0.8,
+        ),
+      )..priority = -40,
     );
 
-
-  }
-
-
-}
-
-
-
-
-
-
-
-// =================================================
-// FAR MOUNTAINS
-// =================================================
-
-class FarMountains extends PositionComponent {
-
-
-  FarMountains({
-
-    required super.size,
-
-  });
-
-
-
-
-
-  @override
-  void render(Canvas canvas) {
-
-
-    final paint = Paint()
-
-      ..color = const Color(0xFF554A56);
-
-
-
-
-
-    for(
-
-      double x = 0;
-
-      x < size.x;
-
-      x += 800
-
-    ){
-
-
-      final path = Path();
-
-
-
-      path.moveTo(
-
-        x,
-
-        500,
-
-      );
-
-
-
-      path.lineTo(
-
-        x + 120,
-
-        400,
-
-      );
-
-
-
-      path.lineTo(
-
-        x + 240,
-
-        330,
-
-      );
-
-
-
-      path.lineTo(
-
-        x + 370,
-
-        430,
-
-      );
-
-
-
-      path.lineTo(
-
-        x + 520,
-
-        350,
-
-      );
-
-
-
-      path.lineTo(
-
-        x + 800,
-
-        420,
-
-      );
-
-
-
-      path.lineTo(
-
-        x + 800,
-
-        590,
-
-      );
-
-
-
-      path.lineTo(
-
-        x,
-
-        590,
-
-      );
-
-
-
-      path.close();
-
-
-
-
-      canvas.drawPath(
-
-        path,
-
-        paint,
-
-      );
-
-
-
-    }
-
-
-  }
-
-
-}
-
-
-
-
-
-
-
-// =================================================
-// NEAR MOUNTAINS
-// =================================================
-
-class NearMountains extends PositionComponent {
-
-
-  NearMountains({
-
-    required super.size,
-
-  });
-
-
-
-
-
-  @override
-  void render(Canvas canvas) {
-
-
-    final paint = Paint()
-
-      ..color = const Color(0xFF342C31);
-
-
-
-
-
-    for(
-
-      double x = 0;
-
-      x < size.x;
-
-      x += 1000
-
-    ){
-
-
-      final path = Path();
-
-
-
-
-      path.moveTo(
-
-        x,
-
-        540,
-
-      );
-
-
-
-      path.lineTo(
-
-        x + 150,
-
-        450,
-
-      );
-
-
-
-      path.lineTo(
-
-        x + 330,
-
-        500,
-
-      );
-
-
-
-      path.lineTo(
-
-        x + 520,
-
-        390,
-
-      );
-
-
-
-      path.lineTo(
-
-        x + 720,
-
-        500,
-
-      );
-
-
-
-      path.lineTo(
-
-        x + 1000,
-
-        430,
-
-      );
-
-
-
-      path.lineTo(
-
-        x + 1000,
-
-        590,
-
-      );
-
-
-
-      path.lineTo(
-
-        x,
-
-        590,
-
-      );
-
-
-
-      path.close();
-
-
-
-
-
-      canvas.drawPath(
-
-        path,
-
-        paint,
-
-      );
-
-
-
-    }
-
-
-  }
-
-
-}
-// =================================================
-// SABAEAN RUINS
-// =================================================
-
-class SabaRuins extends PositionComponent {
-
-
-  SabaRuins({
-
-    required super.position,
-
-    super.scale,
-
-  }) : super(
-
-    size: Vector2(
-      360,
-      240,
+    // =========================
+    // GROUND
+    // =========================
+
+    add(
+      DesertGround(
+        position: Vector2(
+          0,
+          590,
+        ),
+        size: Vector2(
+          worldWidth,
+          130,
+        ),
+      )..priority = -20,
+    );
+
+    // =========================
+    // COIN 1
+    // =========================
+
+    add(
+      Coin(
+        coinId:
+            'level1_coin_1',
+        progress: progress,
+        position: Vector2(
+          1200,
+          500,
+        ),
+      )..priority = 5,
+    );
+
+    // =========================
+    // COIN 2
+    // =========================
+
+    add(
+      Coin(
+        coinId:
+            'level1_coin_2',
+        progress: progress,
+        position: Vector2(
+          1800,
+          500,
+        ),
+      )..priority = 5,
+    );
+
+    // =========================
+    // ENEMY
+    // =========================
+
+   add(
+  SabaEnemy(
+    enemyId: 'level2_enemy_2',
+    progress: progress,
+    position: Vector2(
+      3650,
+      500,
     ),
+    player: player,
+  )..priority = 6,
+);
 
-  );
+    // =========================
+    // CHECKPOINT
+    // =========================
 
+    add(
+      Checkpoint(
+        position: Vector2(
+          2800,
+          590,
+        ),
+        player: player,
+        onActivated:
+            (position) {
+          progress.saveCheckpoint(
+            position,
+          );
 
-
-
-  @override
-  void render(Canvas canvas) {
-
-
-    final stone = Paint()
-
-      ..color = const Color(0xFF916B50);
-
-
-
-    final darkStone = Paint()
-
-      ..color = const Color(0xFF5D4538);
-
-
-
-
-
-
-    // قاعدة المعبد
-
-    canvas.drawRect(
-
-      const Rect.fromLTWH(
-
-        15,
-
-        190,
-
-        330,
-
-        25,
-
-      ),
-
-      darkStone,
-
+          onCheckpointActivated
+              ?.call(
+            position,
+          );
+        },
+      )..priority = 8,
     );
 
+    // =========================
+    // TREASURE CHEST
+    // =========================
 
+    add(
+    TreasureChest(
+  chestId: 'level1_chest_1',
+  progress: progress,
+  position: Vector2(
+    3200,
+    535,
+  ),
+  player: player,
+)
+ );
 
+    // =========================
+    // END GATE
+    // =========================
 
+    add(
+      LevelGate(
+        position: Vector2(
+          4600,
+          485,
+        ),
+      )..priority = 5,
+    );
+  }
 
-    canvas.drawRect(
+  // ============================================================
+  // LEVEL 2
+  // ============================================================
 
-      const Rect.fromLTWH(
+  void _buildLevelTwo() {
+    // =========================
+    // RUINS
+    // =========================
 
-        40,
-
-        170,
-
-        285,
-
-        22,
-
-      ),
-
-      stone,
-
+    add(
+      SabaRuins(
+        position: Vector2(
+          1300,
+          355,
+        ),
+        scale: Vector2.all(
+          1.1,
+        ),
+      )..priority = -40,
     );
 
+    add(
+      SabaRuins(
+        position: Vector2(
+          3000,
+          365,
+        ),
+        scale: Vector2.all(
+          0.9,
+        ),
+      )..priority = -40,
+    );
 
+    add(
+      SabaRuins(
+        position: Vector2(
+          4100,
+          380,
+        ),
+        scale: Vector2.all(
+          0.7,
+        ),
+      )..priority = -40,
+    );
 
+    // =========================
+    // GROUND
+    // =========================
 
+    add(
+      DesertGround(
+        position: Vector2(
+          0,
+          590,
+        ),
+        size: Vector2(
+          worldWidth,
+          130,
+        ),
+      )..priority = -20,
+    );
 
+    // =========================
+    // COINS
+    // =========================
 
-
-    // الأعمدة
-
-    const columns = [
-
-      70.0,
-
-      130.0,
-
-      190.0,
-
-      250.0,
-
+    final coinPositions =
+        <Vector2>[
+      Vector2(
+        950,
+        500,
+      ),
+      Vector2(
+        1350,
+        500,
+      ),
+      Vector2(
+        1750,
+        500,
+      ),
+      Vector2(
+        2650,
+        500,
+      ),
+      Vector2(
+        3500,
+        500,
+      ),
     ];
 
-
-
-
-
-    for(final x in columns){
-
-
-      canvas.drawRect(
-
-        Rect.fromLTWH(
-
-          x,
-
-          65,
-
-          28,
-
-          105,
-
-        ),
-
-        stone,
-
+    for (
+      int i = 0;
+      i < coinPositions.length;
+      i++
+    ) {
+      add(
+        Coin(
+          coinId:
+              'level2_coin_${i + 1}',
+          progress: progress,
+          position:
+              coinPositions[i],
+        )..priority = 5,
       );
-
-
-
-
-      canvas.drawRect(
-
-        Rect.fromLTWH(
-
-          x - 5,
-
-          55,
-
-          38,
-
-          12,
-
-        ),
-
-        darkStone,
-
-      );
-
-
-
     }
 
+    // =========================
+    // ENEMY 1
+    // =========================
 
+   add(
+  SabaEnemy(
+    enemyId: 'level2_enemy_1',
+    progress: progress,
+    position: Vector2(
+      2050,
+      500,
+    ),
+    player: player,
+  )..priority = 6,
+);
 
+    // =========================
+    // CHECKPOINT
+    // =========================
 
+    add(
+      Checkpoint(
+        position: Vector2(
+          2900,
+          590,
+        ),
+        player: player,
+        onActivated:
+            (position) {
+          progress.saveCheckpoint(
+            position,
+          );
 
-
-
-
-    // سقف المعبد
-
-    canvas.drawRect(
-
-      const Rect.fromLTWH(
-
-        55,
-
-        38,
-
-        240,
-
-        18,
-
-      ),
-
-      stone,
-
+          onCheckpointActivated
+              ?.call(
+            position,
+          );
+        },
+      )..priority = 8,
     );
 
+    // =========================
+    // ENEMY 2
+    // =========================
 
+    add(
+      SabaEnemy(
+        position: Vector2(
+          3650,
+          500,
+        ),
+        player: player,
+      )..priority = 6,
+    );
 
+    // =========================
+    // TREASURE CHEST
+    // =========================
+
+    add(
+     TreasureChest(
+  chestId: 'level2_chest_1',
+  progress: progress,
+  position: Vector2(
+    4050,
+    535,
+  ),
+  player: player,
+)
+    );
+
+    // =========================
+    // END GATE
+    // =========================
+
+    add(
+      LevelGate(
+        position: Vector2(
+          4600,
+          485,
+        ),
+      )..priority = 5,
+    );
   }
 
-
-}
-
-
-
-
-
-
-
-
-
-// =================================================
-// DESERT GROUND
-// =================================================
-
-class DesertGround extends PositionComponent {
-
-
-
-  DesertGround({
-
-    required super.position,
-
-    required super.size,
-
-  });
-
-
-
-
-
-
+  // ============================================================
+  // UPDATE
+  // ============================================================
 
   @override
-  void render(Canvas canvas) {
-
-
-
-    final rect = Rect.fromLTWH(
-
-      0,
-
-      0,
-
-      size.x,
-
-      size.y,
-
-    );
-
-
-
-
-
-
-    final paint = Paint()
-
-      ..shader = const LinearGradient(
-
-        begin: Alignment.topCenter,
-
-        end: Alignment.bottomCenter,
-
-        colors: [
-
-          Color(0xFF966644),
-
-          Color(0xFF5C4031),
-
-          Color(0xFF30251F),
-
-        ],
-
-      ).createShader(rect);
-
-
-
-
-
-
-
-
-    // الرمل
-
-    canvas.drawRect(
-
-      rect,
-
-      paint,
-
-    );
-
-
-
-
-
-
-
-    // حافة الأرض
-
-    canvas.drawRect(
-
-      Rect.fromLTWH(
-
-        0,
-
-        0,
-
-        size.x,
-
-        7,
-
-      ),
-
-      Paint()
-
-        ..color = const Color(0xFFD0965E),
-
-    );
-
-
-
-
-
-
-
-
-    // الصخور
-
-    final rockPaint = Paint()
-
-      ..color = const Color(0xFF3B2D27);
-
-
-
-
-
-
-
-    for(
-
-      double x = 300;
-
-      x < size.x;
-
-      x += 600
-
-    ){
-
-
-
-      canvas.drawOval(
-
-        Rect.fromLTWH(
-
-          x,
-
-          45,
-
-          65,
-
-          22,
-
-        ),
-
-        rockPaint,
-
+  void update(double dt) {
+    super.update(dt);
+
+    // =========================
+    // COIN COLLECTION
+    // =========================
+
+    final coins =
+        children
+            .whereType<Coin>()
+            .toList();
+
+    for (final coin in coins) {
+      coin.checkCollision(
+        player,
       );
-
-
-
     }
 
+    // =========================
+    // LEVEL END
+    // =========================
 
-
-
+    if (!levelCompleted &&
+        player.position.x >=
+            4520) {
+      levelCompleted = true;
+    }
   }
+}
 
+// ============================================================
+// SKY
+// ============================================================
 
+class SabaSky
+    extends PositionComponent {
+  SabaSky({
+    required Vector2 size,
+  }) : super(
+          size: size,
+        );
 
+  @override
+  void render(
+    Canvas canvas,
+  ) {
+    super.render(
+      canvas,
+    );
+
+    final rect =
+        Rect.fromLTWH(
+      0,
+      0,
+      size.x,
+      size.y,
+    );
+
+    const gradient =
+        LinearGradient(
+      begin:
+          Alignment.topCenter,
+      end:
+          Alignment.bottomCenter,
+      colors: [
+        Color(
+          0xFF111827,
+        ),
+        Color(
+          0xFF39445C,
+        ),
+        Color(
+          0xFFC87543,
+        ),
+        Color(
+          0xFFE8BD7A,
+        ),
+      ],
+    );
+
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader =
+            gradient
+                .createShader(
+          rect,
+        ),
+    );
+  }
+}
+
+// ============================================================
+// FAR MOUNTAINS
+// ============================================================
+
+class FarMountains
+    extends PositionComponent {
+  FarMountains({
+    required Vector2 size,
+  }) : super(
+          size: size,
+        );
+
+  @override
+  void render(
+    Canvas canvas,
+  ) {
+    super.render(
+      canvas,
+    );
+
+    final paint =
+        Paint()
+          ..color =
+              const Color(
+            0xFF554A56,
+          );
+
+    for (
+      double x = 0;
+      x < size.x;
+      x += 800
+    ) {
+      final path =
+          Path()
+            ..moveTo(
+              x,
+              480,
+            )
+            ..lineTo(
+              x + 200,
+              260,
+            )
+            ..lineTo(
+              x + 400,
+              460,
+            )
+            ..lineTo(
+              x + 620,
+              300,
+            )
+            ..lineTo(
+              x + 800,
+              480,
+            )
+            ..close();
+
+      canvas.drawPath(
+        path,
+        paint,
+      );
+    }
+  }
+}
+
+// ============================================================
+// NEAR MOUNTAINS
+// ============================================================
+
+class NearMountains
+    extends PositionComponent {
+  NearMountains({
+    required Vector2 size,
+  }) : super(
+          size: size,
+        );
+
+  @override
+  void render(
+    Canvas canvas,
+  ) {
+    super.render(
+      canvas,
+    );
+
+    final paint =
+        Paint()
+          ..color =
+              const Color(
+            0xFF342C31,
+          );
+
+    for (
+      double x = 0;
+      x < size.x;
+      x += 1000
+    ) {
+      final path =
+          Path()
+            ..moveTo(
+              x,
+              540,
+            )
+            ..lineTo(
+              x + 280,
+              340,
+            )
+            ..lineTo(
+              x + 520,
+              500,
+            )
+            ..lineTo(
+              x + 760,
+              330,
+            )
+            ..lineTo(
+              x + 1000,
+              540,
+            )
+            ..close();
+
+      canvas.drawPath(
+        path,
+        paint,
+      );
+    }
+  }
+}
+
+// ============================================================
+// SABA RUINS
+// ============================================================
+
+class SabaRuins
+    extends PositionComponent {
+  SabaRuins({
+    required Vector2 position,
+    Vector2? scale,
+  }) : super(
+          position: position,
+          size: Vector2(
+            360,
+            240,
+          ),
+          scale:
+              scale ??
+                  Vector2.all(
+                    1,
+                  ),
+        );
+
+  @override
+  void render(
+    Canvas canvas,
+  ) {
+    super.render(
+      canvas,
+    );
+
+    final stonePaint =
+        Paint()
+          ..color =
+              const Color(
+            0xFF806B55,
+          );
+
+    final darkStonePaint =
+        Paint()
+          ..color =
+              const Color(
+            0xFF57483A,
+          );
+
+    // =========================
+    // ROOF
+    // =========================
+
+    canvas.drawRect(
+      const Rect.fromLTWH(
+        30,
+        20,
+        300,
+        35,
+      ),
+      stonePaint,
+    );
+
+    // =========================
+    // COLUMNS
+    // =========================
+
+    for (
+      int i = 0;
+      i < 5;
+      i++
+    ) {
+      canvas.drawRect(
+        Rect.fromLTWH(
+          45.0 +
+              (i * 65),
+          55,
+          32,
+          160,
+        ),
+        stonePaint,
+      );
+
+      canvas.drawRect(
+        Rect.fromLTWH(
+          39.0 +
+              (i * 65),
+          205,
+          44,
+          18,
+        ),
+        darkStonePaint,
+      );
+    }
+  }
+}
+
+// ============================================================
+// DESERT GROUND
+// ============================================================
+
+class DesertGround
+    extends PositionComponent {
+  DesertGround({
+    required Vector2 position,
+    required Vector2 size,
+  }) : super(
+          position: position,
+          size: size,
+        );
+
+  @override
+  void render(
+    Canvas canvas,
+  ) {
+    super.render(
+      canvas,
+    );
+
+    final rect =
+        Rect.fromLTWH(
+      0,
+      0,
+      size.x,
+      size.y,
+    );
+
+    const gradient =
+        LinearGradient(
+      begin:
+          Alignment.topCenter,
+      end:
+          Alignment.bottomCenter,
+      colors: [
+        Color(
+          0xFFD5A75F,
+        ),
+        Color(
+          0xFF9B683D,
+        ),
+      ],
+    );
+
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader =
+            gradient
+                .createShader(
+          rect,
+        ),
+    );
+
+    final rockPaint =
+        Paint()
+          ..color =
+              const Color(
+            0xFF795038,
+          );
+
+    for (
+      double x = 200;
+      x < size.x;
+      x += 600
+    ) {
+      canvas.drawOval(
+        Rect.fromLTWH(
+          x,
+          25,
+          55,
+          18,
+        ),
+        rockPaint,
+      );
+    }
+  }
 }
