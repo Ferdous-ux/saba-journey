@@ -60,12 +60,15 @@ class SabaWorld extends World {
     // استعادة العملات المحفوظة
     player.coins =
         this.progress.coins;
-  }
+  
+// استعادة صحة اللاعب
 
+player.health =
+    this.progress.health;
   // ============================================================
   // LOAD
   // ============================================================
-
+                }
   @override
   Future<void> onLoad() async {
     await super.onLoad();
@@ -205,7 +208,7 @@ class SabaWorld extends World {
 
    add(
   SabaEnemy(
-    enemyId: 'level2_enemy_2',
+    enemyId: 'level1_enemy_1',
     progress: progress,
     position: Vector2(
       3650,
@@ -226,18 +229,25 @@ class SabaWorld extends World {
           590,
         ),
         player: player,
-        onActivated:
-            (position) {
-          progress.saveCheckpoint(
-            position,
-          );
+      onActivated:
+    (
+      position,
+      health,
+    ) {
 
-          onCheckpointActivated
-              ?.call(
-            position,
-          );
-        },
-      )..priority = 8,
+  progress.saveCheckpoint(
+    position,
+    health: health,
+  );
+
+
+  onCheckpointActivated
+      ?.call(
+    position,
+  );
+
+},
+      )
     );
 
     // =========================
@@ -257,17 +267,30 @@ class SabaWorld extends World {
  );
 
     // =========================
-    // END GATE
-    // =========================
+// END GATE
+// =========================
 
-    add(
-      LevelGate(
-        position: Vector2(
-          4600,
-          485,
-        ),
-      )..priority = 5,
-    );
+add(
+  LevelGate(
+
+    position: Vector2(
+      4600,
+      485,
+    ),
+
+
+    player: player,
+
+
+    onComplete: () {
+
+      levelCompleted = true;
+
+    },
+
+
+  )..priority = 5,
+);
   }
 
   // ============================================================
@@ -402,35 +425,46 @@ class SabaWorld extends World {
           2900,
           590,
         ),
-        player: player,
-        onActivated:
-            (position) {
-          progress.saveCheckpoint(
-            position,
-          );
+       player: player,
+onActivated:
+    (
+      position,
+      health,
+    ) {
 
-          onCheckpointActivated
-              ?.call(
-            position,
-          );
-        },
-      )..priority = 8,
-    );
+  progress.saveCheckpoint(
+    position,
+    health: health,
+  );
+
+
+  onCheckpointActivated
+      ?.call(
+    position,
+  );
+
+},
 
     // =========================
     // ENEMY 2
     // =========================
-
-    add(
-      SabaEnemy(
-        position: Vector2(
-          3650,
-          500,
-        ),
-        player: player,
-      )..priority = 6,
+      )
     );
+  add(
+  SabaEnemy(
+    enemyId: 'level2_enemy_2',
 
+    progress: progress,
+
+    position: Vector2(
+      3650,
+      500,
+    ),
+
+    player: player,
+
+  )..priority = 6,
+);
     // =========================
     // TREASURE CHEST
     // =========================
@@ -452,15 +486,24 @@ class SabaWorld extends World {
     // =========================
 
     add(
-      LevelGate(
-        position: Vector2(
-          4600,
-          485,
-        ),
-      )..priority = 5,
+    LevelGate(
+
+  position: Vector2(
+    4600,
+    485,
+  ),
+
+  player: player,
+
+  onComplete: () {
+
+    levelCompleted = true;
+
+  },
+
+)..priority = 5,
     );
   }
-
   // ============================================================
   // UPDATE
   // ============================================================
