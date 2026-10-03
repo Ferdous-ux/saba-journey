@@ -68,7 +68,7 @@ flutter:
     - assets/maps/
     - assets/images/backgrounds/
     - assets/images/environment/
-    - assets/images/player/
+    - assets/images/player/saba_player.png
     - assets/images/ui/
     - assets/images/effects/
     

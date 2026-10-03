@@ -4,19 +4,48 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 import '../levels/saba_world.dart';
+import 'player_animation.dart';
+
 
 enum PlayerState {
+
   idle,
+
   walking,
+
+  running,
+
   jumping,
+
   falling,
+
   attacking,
+
+  hurt,
+
+  dead,
+
 }
+
+
+
 
 
 class SabaPlayer extends PositionComponent {
 
-  static const double moveSpeed = 350;
+
+
+  // ============================================================
+  // MOVEMENT CONSTANTS
+  // ============================================================
+
+late SpriteAnimationComponent sprite;
+
+late PlayerAnimationController animationController;
+  static const double walkSpeed = 350;
+
+  static const double runSpeed = 520;
+
 
   static const double gravity = 1900;
 
@@ -26,81 +55,229 @@ class SabaPlayer extends PositionComponent {
   static const double groundY = 535;
 
 
+
+
+
+  // ============================================================
+  // COMBAT CONSTANTS
+  // ============================================================
+
+
   static const double attackDuration = 0.30;
 
-  static const double attackRange = 110;
+  static const double attackCooldown = 0.45;
+
+
+  static const double attackRange = 120;
+
 
   static const int attackDamage = 25;
 
 
 
+
+
+  // ============================================================
+  // PHYSICS
+  // ============================================================
+
+
   double moveDirection = 0;
 
+
   double verticalVelocity = 0;
-
-
-  double animationTime = 0;
-
-
-  double attackTimer = 0;
-
-  double hitFlashTimer = 0;
 
 
   double knockbackVelocity = 0;
 
 
-
   bool isOnGround = true;
 
+
   bool facingRight = true;
+
+
+
+
+
+  // ============================================================
+  // ANIMATION SYSTEM
+  // ============================================================
+
+
+  double animationTime = 0;
+
+
+  double animationTimer = 0;
+
+
+  int animationFrame = 0;
+
+
+  String currentAnimation = "idle";
+
+
+
+
+
+  // ============================================================
+  // STATES
+  // ============================================================
+
+
+  PlayerState state =
+      PlayerState.idle;
+
+
+
+
+
+  // ============================================================
+  // ATTACK SYSTEM
+  // ============================================================
+
 
   bool isAttacking = false;
 
 
-
-  PlayerState state = PlayerState.idle;
-
+  double attackTimer = 0;
 
 
-  // =========================
-  // PLAYER DATA
-  // =========================
+  double attackCooldownTimer = 0;
+
+
+  bool attackHit = false;
+
+
+
+
+
+  // ============================================================
+  // HEALTH SYSTEM
+  // ============================================================
+
 
   int health = 100;
 
+
   final int maxHealth = 100;
+
+
+
+  bool isDead = false;
+
+
+  bool isInvincible = false;
+
+
+  double invincibleTimer = 0;
+
+
+  double hitFlashTimer = 0;
+
+
+
+
+
+  // ============================================================
+  // COINS
+  // ============================================================
 
 
   int coins = 0;
 
 
 
+
+
+  // ============================================================
+  // CONSTRUCTOR
+  // ============================================================
+
+
   SabaPlayer({
+
     required super.position,
+
   }) : super(
+
           size: Vector2(
+
             80,
+
             110,
+
           ),
-          anchor: Anchor.center,
+
+          anchor:
+
+              Anchor.center,
+
         );
 
 
 
+
+
+
   @override
-  void update(double dt) {
+  void update(
+    double dt,
+  ) {
+
 
     super.update(dt);
+
 
 
     animationTime += dt;
 
 
 
-    // =========================
-    // ATTACK TIMER
-    // =========================
+    _updateTimers(dt);
+
+
+
+    _updateAnimation(dt);
+
+
+
+    if (!isDead) {
+
+      _updateMovement(dt);
+
+
+      _updateGravity(dt);
+
+
+      _updateGround();
+
+    }
+
+
+
+    _updateState();
+
+
+    _checkWorldBounds();
+
+
+  }
+
+
+
+
+
+
+  // ============================================================
+  // TIMERS
+  // ============================================================
+
+
+  void _updateTimers(
+    double dt,
+  ) {
+
 
     if (attackTimer > 0) {
 
@@ -111,6 +288,7 @@ class SabaPlayer extends PositionComponent {
 
         attackTimer = 0;
 
+
         isAttacking = false;
 
       }
@@ -119,11 +297,46 @@ class SabaPlayer extends PositionComponent {
 
 
 
-    // =========================
-    // HIT FLASH
-    // =========================
+    if (attackCooldownTimer > 0) {
+
+      attackCooldownTimer -= dt;
+
+
+      if (attackCooldownTimer < 0) {
+
+        attackCooldownTimer = 0;
+
+      }
+
+    }
+
+
+
+
+
+    if (invincibleTimer > 0) {
+
+
+      invincibleTimer -= dt;
+
+
+      if (invincibleTimer <= 0) {
+
+
+        invincibleTimer = 0;
+
+
+        isInvincible = false;
+
+      }
+
+    }
+
+
+
 
     if (hitFlashTimer > 0) {
+
 
       hitFlashTimer -= dt;
 
@@ -137,23 +350,69 @@ class SabaPlayer extends PositionComponent {
     }
 
 
+  }
+    // ============================================================
+  // ANIMATION UPDATE
+  // ============================================================
 
-    // =========================
-    // HORIZONTAL MOVEMENT
-    // =========================
+
+  void _updateAnimation(
+    double dt,
+  ) {
+
+
+    animationTimer += dt;
+
+
+    if (animationTimer >= 0.12) {
+
+
+      animationTimer = 0;
+
+
+      animationFrame++;
+
+
+      if (animationFrame > 3) {
+
+        animationFrame = 0;
+
+      }
+
+    }
+
+  }
+
+
+
+
+
+
+  // ============================================================
+  // MOVEMENT SYSTEM
+  // ============================================================
+
+
+  void _updateMovement(
+    double dt,
+  ) {
+
+
+    final speed = runSpeed;
+
 
     position.x +=
-        (moveDirection *
-            moveSpeed +
-            knockbackVelocity) *
-            dt;
+        (
+          moveDirection * speed +
+          knockbackVelocity
+        ) * dt;
 
 
 
     knockbackVelocity =
         _moveTowardsZero(
           knockbackVelocity,
-          1400 * dt,
+          1500 * dt,
         );
 
 
@@ -162,130 +421,293 @@ class SabaPlayer extends PositionComponent {
 
       facingRight = true;
 
-    } else if (moveDirection < 0) {
+    }
+
+    else if (moveDirection < 0) {
 
       facingRight = false;
 
     }
 
 
+  }
 
-    // =========================
-    // GRAVITY
-    // =========================
+
+
+
+
+
+
+
+  // ============================================================
+  // GRAVITY
+  // ============================================================
+
+
+  void _updateGravity(
+    double dt,
+  ) {
+
 
     verticalVelocity +=
         gravity * dt;
+
 
 
     position.y +=
         verticalVelocity * dt;
 
 
+  }
 
-    // =========================
-    // GROUND
-    // =========================
+
+
+
+
+
+
+  // ============================================================
+  // GROUND CHECK
+  // ============================================================
+
+
+  void _updateGround() {
+
 
     if (position.y >= groundY) {
 
+
       position.y = groundY;
+
 
       verticalVelocity = 0;
 
+
       isOnGround = true;
+
+
+    }
+
+  }
+
+
+
+
+
+
+
+  // ============================================================
+  // PLAYER STATE
+  // ============================================================
+
+
+  void _updateState() {
+
+
+
+    if (isDead) {
+
+
+      state = PlayerState.dead;
+
+
+      currentAnimation = "death";
+
+
+      return;
+
 
     }
 
 
 
-    // =========================
-    // STATE
-    // =========================
+
 
     if (isAttacking) {
+
 
       state = PlayerState.attacking;
 
 
-    } else if (!isOnGround) {
+      currentAnimation = "attack";
 
 
-      if (verticalVelocity < 0) {
+      return;
 
-        state = PlayerState.jumping;
-
-      } else {
-
-        state = PlayerState.falling;
-
-      }
-
-
-    } else if (moveDirection != 0) {
-
-
-      state = PlayerState.walking;
-
-
-    } else {
-
-
-      state = PlayerState.idle;
 
     }
 
 
 
 
-    // =========================
-    // WORLD LIMITS
-    // =========================
+
+    if (hitFlashTimer > 0) {
+
+
+      state = PlayerState.hurt;
+
+
+      currentAnimation = "hurt";
+
+
+      return;
+
+
+    }
+
+
+
+
+
+    if (!isOnGround) {
+
+
+      if (verticalVelocity < 0) {
+
+
+        state = PlayerState.jumping;
+
+
+        currentAnimation = "jump";
+
+
+      }
+
+      else {
+
+
+        state = PlayerState.falling;
+
+
+        currentAnimation = "fall";
+
+
+      }
+
+
+      return;
+
+
+    }
+
+
+
+
+
+
+
+    if (moveDirection != 0) {
+
+
+      state = PlayerState.running;
+
+
+      currentAnimation = "run";
+
+
+      return;
+
+
+    }
+
+
+
+
+
+    state = PlayerState.idle;
+
+
+    currentAnimation = "idle";
+
+
+  }
+
+
+
+
+
+
+
+
+  // ============================================================
+  // WORLD LIMIT
+  // ============================================================
+
+
+  void _checkWorldBounds() {
 
 
     final halfWidth =
         size.x / 2;
 
 
+
     position.x =
         position.x.clamp(
-      halfWidth,
-      SabaWorld.worldWidth -
+
           halfWidth,
-    );
+
+
+          SabaWorld.worldWidth -
+              halfWidth,
+
+        );
+
 
   }
 
 
 
+
+
+
+
+
+  // ============================================================
+  // HELPERS
+  // ============================================================
 
 
   double _moveTowardsZero(
     double value,
+
     double amount,
+
   ) {
+
 
     if (value > 0) {
 
+
       return math.max(
+
         0,
+
         value - amount,
+
       );
 
     }
+
 
 
     if (value < 0) {
 
+
       return math.min(
+
         0,
+
         value + amount,
+
       );
 
     }
 
 
+
     return 0;
+
 
   }
 
@@ -293,30 +715,51 @@ class SabaPlayer extends PositionComponent {
 
 
 
-  // =========================
-  // MOVEMENT
-  // =========================
+
+
+
+  // ============================================================
+  // MOVEMENT CONTROLS
+  // ============================================================
 
 
   void moveLeft() {
 
+
+    if (isDead) return;
+
+
     moveDirection = -1;
 
+
   }
+
+
+
 
 
 
   void moveRight() {
 
+
+    if (isDead) return;
+
+
     moveDirection = 1;
 
+
   }
+
+
+
 
 
 
   void stopMoving() {
 
+
     moveDirection = 0;
+
 
   }
 
@@ -324,24 +767,41 @@ class SabaPlayer extends PositionComponent {
 
 
 
-  // =========================
+
+
+
+  // ============================================================
   // JUMP
-  // =========================
+  // ============================================================
 
 
   void jump() {
 
-    if (!isOnGround ||
-        health <= 0) {
+
+    if (
+
+      !isOnGround ||
+
+      isDead
+
+    ) {
+
 
       return;
+
 
     }
 
 
-    verticalVelocity = jumpForce;
+
+
+    verticalVelocity =
+        jumpForce;
+
+
 
     isOnGround = false;
+
 
   }
 
@@ -349,71 +809,100 @@ class SabaPlayer extends PositionComponent {
 
 
 
-  // =========================
+
+
+
+  // ============================================================
   // ATTACK
-  // =========================
+  // ============================================================
 
 
   void attack() {
 
-    if (isAttacking ||
-        health <= 0) {
+
+    if (
+
+      isDead ||
+
+      isAttacking ||
+
+      attackCooldownTimer > 0
+
+    ) {
+
 
       return;
+
 
     }
 
 
+
+
+
     isAttacking = true;
+
+
+    attackHit = false;
+
+
 
     attackTimer =
         attackDuration;
 
+
+
+    attackCooldownTimer =
+        attackCooldown;
+
+
   }
+
+
+
 
 
 
   bool canHit(
     Vector2 targetPosition,
+
   ) {
 
-    if (!isAttacking) {
+
+    if (!isAttacking ||
+
+        attackHit) {
+
 
       return false;
 
+
     }
 
 
-    final dx =
-        targetPosition.x -
-        position.x;
 
-
-    final dy =
-        (targetPosition.y -
-                position.y)
-            .abs();
+    final distance =
+        position.distanceTo(
+          targetPosition,
+        );
 
 
 
-    if (dy > 100) {
+    if (distance > attackRange) {
+
 
       return false;
 
-    }
-
-
-
-    if (facingRight) {
-
-      return dx >= 0 &&
-          dx <= attackRange;
 
     }
 
 
-    return dx <= 0 &&
-        dx.abs() <= attackRange;
+
+    attackHit = true;
+
+
+    return true;
+
 
   }
 
@@ -421,92 +910,213 @@ class SabaPlayer extends PositionComponent {
 
 
 
-  // =========================
-  // HEALTH
-  // =========================
+
+
+
+  // ============================================================
+  // DAMAGE SYSTEM
+  // ============================================================
 
 
   void takeDamage(
+
     int amount, {
+
     double knockbackDirection = 0,
+
   }) {
 
-    if (health <= 0) {
+
+
+    if (
+
+      isDead ||
+
+      isInvincible
+
+    ) {
+
 
       return;
 
+
     }
+
+
 
 
     health -= amount;
 
 
-    if (health < 0) {
+
+    if (health <= 0) {
+
 
       health = 0;
+
+
+      die();
+
+
+      return;
+
 
     }
 
 
-    hitFlashTimer = 0.18;
+
+
+
+
+    hitFlashTimer = 0.25;
+
+
+
+    isInvincible = true;
+
+
+    invincibleTimer = 0.8;
+
 
 
 
     if (knockbackDirection != 0) {
 
+
       knockbackVelocity =
-          knockbackDirection * 420;
+          knockbackDirection * 450;
+
 
     }
 
 
-    verticalVelocity = -220;
+
+
+    verticalVelocity = -250;
+
 
     isOnGround = false;
 
+
+
   }
 
+
+
+
+
+
+
+
+  // ============================================================
+  // DEATH
+  // ============================================================
+
+
+  void die() {
+
+
+    isDead = true;
+
+
+    state = PlayerState.dead;
+
+
+    stopMoving();
+
+
+  }
+
+
+
+
+
+
+
+
+  void respawn(
+    Vector2 position,
+
+  ) {
+
+
+    this.position =
+        position.clone();
+
+
+
+    health = maxHealth;
+
+
+    isDead = false;
+
+
+    isInvincible = false;
+
+
+
+    verticalVelocity = 0;
+
+
+
+    state = PlayerState.idle;
+
+
+  }
+
+
+
+
+
+
+
+
+  // ============================================================
+  // HEALTH
+  // ============================================================
 
 
   void heal(
     int amount,
+
   ) {
+
 
     health += amount;
 
 
+
     if (health > maxHealth) {
+
 
       health = maxHealth;
 
+
     }
 
-  }
-
-
-
-  // =========================
-  // CHECKPOINT HEALTH
-  // =========================
-
-
-  int getCurrentHealth() {
-
-    return health;
 
   }
+
+
+
+
 
 
 
   void setHealth(
     int value,
+
   ) {
 
-    health =
-        value.clamp(
+
+    health = value.clamp(
+
       0,
+
       maxHealth,
+
     );
+
 
   }
 
@@ -514,43 +1124,80 @@ class SabaPlayer extends PositionComponent {
 
 
 
-  // =========================
+
+
+  int getCurrentHealth() {
+
+
+    return health;
+
+
+  }
+
+
+
+
+
+
+
+
+  // ============================================================
   // COINS
-  // =========================
+  // ============================================================
 
 
   void addCoin() {
 
+
     coins++;
 
+
   }
-    // =========================
-  // RENDER
-  // =========================
+    // ============================================================
+  // RENDER SYSTEM
+  // ============================================================
+
 
   @override
-  void render(Canvas canvas) {
+  void render(
+    Canvas canvas,
+  ) {
+
 
     super.render(canvas);
+
 
 
     canvas.save();
 
 
 
+    // قلب الشخصية حسب الاتجاه
+
     if (!facingRight) {
 
+
       canvas.translate(
+
         size.x,
+
         0,
+
       );
+
 
       canvas.scale(
+
         -1,
+
         1,
+
       );
 
+
     }
+
+
 
 
 
@@ -563,27 +1210,83 @@ class SabaPlayer extends PositionComponent {
 
 
 
-    // وميض أحمر عند الإصابة
+
+
+    // ============================================================
+    // DAMAGE FLASH
+    // ============================================================
+
 
     if (hitFlashTimer > 0) {
+
 
       canvas.drawRect(
 
         Rect.fromLTWH(
+
           0,
+
           0,
+
           size.x,
+
           size.y,
+
         ),
+
 
         Paint()
 
-          ..color =
-              Colors.red.withValues(
+          ..color = Colors.red.withValues(
+
             alpha: 0.35,
+
           ),
 
+
       );
+
+
+    }
+
+
+
+
+
+
+    // ============================================================
+    // DEAD EFFECT
+    // ============================================================
+
+
+    if (isDead) {
+
+
+      canvas.drawCircle(
+
+        Offset(
+
+          size.x / 2,
+
+          size.y / 2,
+
+        ),
+
+
+        55,
+
+
+        Paint()
+
+          ..color = Colors.black.withValues(
+
+            alpha: 0.25,
+
+          ),
+
+
+      );
+
 
     }
 
@@ -595,6 +1298,14 @@ class SabaPlayer extends PositionComponent {
 
 
 
+
+
+
+  // ============================================================
+  // PLAYER DRAWING
+  // ============================================================
+
+
   void _drawPlayer(
     Canvas canvas,
   ) {
@@ -604,39 +1315,61 @@ class SabaPlayer extends PositionComponent {
 
 
 
-    if (state == PlayerState.walking) {
+    if (
+
+      state == PlayerState.running ||
+
+      state == PlayerState.walking
+
+    ) {
+
 
       legOffset =
+
           math.sin(
-            animationTime * 10,
+
+            animationTime * 12,
+
           ) *
-          5;
+
+          6;
+
 
     }
 
 
 
 
-    // =========================
-    // SHADOW
-    // =========================
 
+
+
+    // SHADOW
 
     canvas.drawOval(
 
+
       const Rect.fromLTWH(
+
         10,
+
         99,
+
         60,
+
         10,
+
       ),
+
+
 
       Paint()
 
-        ..color =
-            Colors.black.withValues(
+        ..color = Colors.black.withValues(
+
           alpha: 0.30,
+
         ),
+
 
     );
 
@@ -644,47 +1377,71 @@ class SabaPlayer extends PositionComponent {
 
 
 
-    // =========================
+
+
+    // ============================================================
     // CLOAK
-    // =========================
+    // ============================================================
 
 
     final cloak = Path()
 
       ..moveTo(
+
         24,
+
         43,
+
       )
 
+
       ..lineTo(
+
         55,
+
         43,
+
       )
 
+
       ..lineTo(
+
         67,
+
         96,
+
       )
 
+
       ..lineTo(
+
         14,
+
         96,
+
       )
+
 
       ..close();
 
 
 
+
+
     canvas.drawPath(
+
 
       cloak,
 
+
       Paint()
 
-        ..color =
-            const Color(
+        ..color = const Color(
+
           0xFF733B32,
+
         ),
+
 
     );
 
@@ -693,26 +1450,34 @@ class SabaPlayer extends PositionComponent {
 
 
 
-    // =========================
+
     // BODY
-    // =========================
 
 
     canvas.drawRect(
 
+
       const Rect.fromLTWH(
+
         29,
+
         45,
+
         22,
+
         40,
+
       ),
+
 
       Paint()
 
-        ..color =
-            const Color(
+        ..color = const Color(
+
           0xFFC58B57,
+
         ),
+
 
     );
 
@@ -721,26 +1486,34 @@ class SabaPlayer extends PositionComponent {
 
 
 
-    // =========================
+
     // BELT
-    // =========================
 
 
     canvas.drawRect(
 
+
       const Rect.fromLTWH(
+
         25,
+
         66,
+
         31,
+
         7,
+
       ),
+
 
       Paint()
 
-        ..color =
-            const Color(
+        ..color = const Color(
+
           0xFF332622,
+
         ),
+
 
     );
 
@@ -750,26 +1523,32 @@ class SabaPlayer extends PositionComponent {
 
 
 
-    // =========================
     // HEAD
-    // =========================
 
 
     canvas.drawCircle(
 
+
       const Offset(
+
         40,
+
         29,
+
       ),
+
 
       15,
 
+
       Paint()
 
-        ..color =
-            const Color(
+        ..color = const Color(
+
           0xFFB9784D,
+
         ),
+
 
     );
 
@@ -778,49 +1557,74 @@ class SabaPlayer extends PositionComponent {
 
 
 
-    // =========================
+
+
     // HEAD COVER
-    // =========================
 
 
     final headCover = Path()
 
+
       ..moveTo(
+
         23,
+
         28,
+
       )
+
 
       ..quadraticBezierTo(
+
         40,
+
         5,
+
         58,
+
         27,
+
       )
 
+
       ..lineTo(
+
         53,
+
         35,
+
       )
 
+
       ..lineTo(
+
         27,
+
         35,
+
       )
+
 
       ..close();
 
 
 
+
+
     canvas.drawPath(
+
 
       headCover,
 
+
       Paint()
 
-        ..color =
-            const Color(
+        ..color = const Color(
+
           0xFF423330,
+
         ),
+
 
     );
 
@@ -829,26 +1633,36 @@ class SabaPlayer extends PositionComponent {
 
 
 
-    // =========================
-    // BACK ARM
-    // =========================
+
+    // ============================================================
+    // ARMS
+    // ============================================================
 
 
     canvas.drawRect(
+
 
       const Rect.fromLTWH(
+
         17,
+
         48,
+
         10,
+
         34,
+
       ),
+
 
       Paint()
 
-        ..color =
-            const Color(
+        ..color = const Color(
+
           0xFF99553D,
+
         ),
+
 
     );
 
@@ -858,37 +1672,33 @@ class SabaPlayer extends PositionComponent {
 
 
 
-    // =========================
-    // FRONT ARM ATTACK
-    // =========================
+    // attack arm
 
 
     canvas.drawRect(
+
 
       Rect.fromLTWH(
 
-        isAttacking
-            ? 55
-            : 53,
+        isAttacking ? 55 : 53,
 
-        isAttacking
-            ? 43
-            : 48,
+        isAttacking ? 43 : 48,
 
-        isAttacking
-            ? 32
-            : 10,
+        isAttacking ? 35 : 10,
 
         10,
 
       ),
 
+
       Paint()
 
-        ..color =
-            const Color(
+        ..color = const Color(
+
           0xFF99553D,
+
         ),
+
 
     );
 
@@ -898,12 +1708,15 @@ class SabaPlayer extends PositionComponent {
 
 
 
-    // =========================
+
+
+    // ============================================================
     // LEGS
-    // =========================
+    // ============================================================
 
 
     canvas.drawRect(
+
 
       Rect.fromLTWH(
 
@@ -917,18 +1730,26 @@ class SabaPlayer extends PositionComponent {
 
       ),
 
+
       Paint()
 
-        ..color =
-            const Color(
+        ..color = const Color(
+
           0xFF302725,
+
         ),
+
 
     );
 
 
 
+
+
+
+
     canvas.drawRect(
+
 
       Rect.fromLTWH(
 
@@ -942,12 +1763,15 @@ class SabaPlayer extends PositionComponent {
 
       ),
 
+
       Paint()
 
-        ..color =
-            const Color(
+        ..color = const Color(
+
           0xFF302725,
+
         ),
+
 
     );
 
@@ -956,26 +1780,34 @@ class SabaPlayer extends PositionComponent {
 
 
 
-    // =========================
+
     // FOOT
-    // =========================
 
 
     canvas.drawRect(
 
+
       const Rect.fromLTWH(
+
         43,
+
         101,
+
         18,
+
         6,
+
       ),
+
 
       Paint()
 
-        ..color =
-            const Color(
+        ..color = const Color(
+
           0xFF211B1A,
+
         ),
+
 
     );
 
@@ -985,9 +1817,11 @@ class SabaPlayer extends PositionComponent {
 
 
 
-    // =========================
-    // ATTACK ARC
-    // =========================
+
+
+    // ============================================================
+    // ATTACK EFFECT
+    // ============================================================
 
 
     if (isAttacking) {
@@ -995,35 +1829,92 @@ class SabaPlayer extends PositionComponent {
 
       canvas.drawArc(
 
+
         const Rect.fromLTWH(
+
           52,
+
           18,
-          80,
-          80,
+
+          90,
+
+          90,
+
         ),
+
 
         -1.0,
 
+
         2.0,
+
 
         false,
 
+
         Paint()
 
-          ..color =
-              const Color(
+          ..color = const Color(
+
             0xFFFFD27A,
+
           )
 
-          ..style =
-              PaintingStyle.stroke
 
-          ..strokeWidth = 5,
+          ..style = PaintingStyle.stroke
+
+
+          ..strokeWidth = 6,
+
 
       );
 
 
     }
+
+
+
+
+
+    // ============================================================
+    // HURT EFFECT
+    // ============================================================
+
+
+    if (state == PlayerState.hurt) {
+
+
+      canvas.drawCircle(
+
+
+        const Offset(
+
+          40,
+
+          50,
+
+        ),
+
+
+        45,
+
+
+        Paint()
+
+          ..style = PaintingStyle.stroke
+
+
+          ..strokeWidth = 3
+
+
+          ..color = Colors.white,
+
+
+      );
+
+
+    }
+
 
 
   }
